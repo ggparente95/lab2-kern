@@ -64,3 +64,24 @@ Uso       Evento/s    Categoría       Descripción
 
 Ej: kern0-gdb:
 
+
+
+
+
+
+
+
+
+
+
+Ej: kern0-vga
+Explicar el código anterior, en particular:
+
+qué se imprime por pantalla al arrancar.
+Se imprime un OK en color verde
+
+qué representan cada uno de los valores enteros (incluyendo 0xb8000).
+
+por qué se usa el modificador volatile para el puntero al buffer.
+
+
