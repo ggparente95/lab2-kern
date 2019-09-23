@@ -11,7 +11,7 @@ Rta: Consume entre el 99-101% de CPU. Lo que hace es loopear infinitamente sin h
 
 Ej: kern0-quit
 
-Asimismo, la combinación Ctrl-a c permite entrar al “monitor” de QEMU, desde donde se puede obtener información adicional sobre el entorno de ejecución. Ejecutar el comando info registers en el monitor de QEMU, e incluir el resultado en la entrega. 
+Asimismo, la combinación Ctrl-a c permite entrar al “monitor” de QEMU, desde donde se puede obtener información adicional sobre el entorno de ejecución. Ejecutar el comando info registers en el monitor de QEMU, e incluir el resultado en la entrega.
 
 QEMU 2.11.1 monitor - type 'help' for more information
 (qemu) info registers
@@ -29,7 +29,7 @@ TR =0000 00000000 0000ffff 00008b00 DPL=0 TSS32-busy
 GDT=     000caa68 00000027
 IDT=     00000000 000003ff
 CR0=00000011 CR2=00000000 CR3=00000000 CR4=00000000
-DR0=00000000 DR1=00000000 DR2=00000000 DR3=00000000 
+DR0=00000000 DR1=00000000 DR2=00000000 DR3=00000000
 DR6=ffff0ff0 DR7=00000400
 EFER=0000000000000000
 FCW=037f FSW=0000 [ST=0] FTW=00 MXCSR=00001f80
@@ -65,6 +65,22 @@ Uso       Evento/s    Categoría       Descripción
 Ej: kern0-gdb:
 
 
+qué se imprime por pantalla al arrancar.
+qué representan cada uno de los valores enteros (incluyendo 0xb8000).
+por qué se usa el modificador volatile para el puntero al buffer.
+
+
+Imprime 'OK' al comienzo
+La memoria de video para monitores de color reside en 0xB8000.
+El 79 es el caracter ASCII de 'O'
+El 75 es el caracter ASCII de 'K'
+El 47 corresponde al color con el que se quiere pintar
+Se usa el modificador volatile para indicarle al compilador que el valor de la variable al que esta asociado puede cambiar en cualquier momento.
+El compilador no optimiza los accesos a dicha variable. Puede que el valor de lo que apunta no dependa del programa actual.
+
+
+
+
 
 
 
@@ -83,5 +99,22 @@ Se imprime un OK en color verde
 qué representan cada uno de los valores enteros (incluyendo 0xb8000).
 
 por qué se usa el modificador volatile para el puntero al buffer.
+
+
+
+Ej: kern0-endian
+
+Compilar el siguiente programa y justificar la salida que produce en la terminal:
+
+#include <stdio.h>
+
+int main(void) {
+    unsigned int i = 0x00646c72;
+    printf("H%x Wo%s\n", 57616, (char *) &i);
+}
+
+Esto imprime He110 World.
+57616 corresponde, en hexadecimal, a e110. El %x del printf permite mostrarlo
+
 
 
