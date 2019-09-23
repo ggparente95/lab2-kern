@@ -106,3 +106,56 @@ A continuación, reescribir el código para una arquitectura big-endian, de mane
     unsigned int i = 0x00646c72; -------->  unsigned int i = 0x726c6400;
 
 
+
+Ej: x86-write
+¿Por qué se le resta 1 al resultado de sizeof?
+
+    Por que el ultimo caracter es el de fin de string.
+
+¿Funcionaría el programa si se declarase msg como const char *msg = "...";? ¿Por qué?
+
+    No, porque el sizeof devuelve el tamaño de la estructura creada en tiempo de compilación.
+    El sizeof de un const char* devuelve el tamaño de un puntero, mientras const char [] devuelve el tamaño de la estructura, que es un array.
+
+Compilar ahora libc_hello.S y verificar que funciona correctamente. Explicar el propósito de cada instrucción, y cómo se corresponde con el código C original.
+    Pushea la variable len, que es la longitud del string.
+    Pushea el string a imprimir
+    Pushea 1 (standard ouput)
+    Se llama a la syscall "write"
+    Se pushea a la pila el numero 7
+    Se llama a la syscall "_exit"
+
+Hex dump de ./libc_hello (.ascii):
+0000000  48  65  6c  6c  6f  2c  20  77  6f  72  6c  64  21  0a
+          H   e   l   l   o   ,       w   o   r   l   d   !  \n
+0000016
+
+Hex dump de ./libc_hello (.asciz):
+0000000  48  65  6c  6c  6f  2c  20  77  6f  72  6c  64  21  0a  00
+          H   e   l   l   o   ,       w   o   r   l   d   !  \n  \0
+0000017
+
+La diferencia es el '\0' en el caso de .asciz. Asciz imprime strings con un nulo al final.
+
+
+
+
+Ej: x86-libc
+Salida de nm -u int80_hi:
+         w __cxa_finalize@@GLIBC_2.1.3
+         w __gmon_start__
+         w _ITM_deregisterTMCloneTable
+         w _ITM_registerTMCloneTable
+         U __libc_start_main@@GLIBC_2.
+
+Salida de nm -u int80_strlen:
+        nose
+
+
+¿qué significa que un registro sea callee-saved en lugar de caller-saved?
+    Callee-saved : la funcion que usa ese registro, lo guarda. Si una funcion1 llama a una funcion2 que toca, por ejemplo, el EBX, no necesita guardarlo antes de la llamada.
+    Caller-saved: la funcion que usa ese registro, no lo guarda. Esto hace que si por ejemplo, una funcion1 llama a una funcion2 y esa funcion2 modifica el valor del EAX, la funcion1 tiene que encargarse de guardar el contenido del EAX antes de la llamada a funcion2, para poder tenerlo despues
+
+en x86 ¿de qué tipo, caller-saved o callee-saved, es cada registro según la convención de llamadas de GCC?
+    Son Caller-saved: EAX, ECX y EDX
+    Son Callee-saved: EBP, EBX, EDI y ESI
