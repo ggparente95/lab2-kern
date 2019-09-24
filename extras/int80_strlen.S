@@ -2,6 +2,9 @@
 
 .globl main
 main:
+        push $msg
+        call strlen
+        mov %eax,len(,1)
 
         mov $SYS_write, %eax   // %eax == syscall number
         mov $1, %ebx           // %ebx == 1st argument (fd)
@@ -9,11 +12,12 @@ main:
         mov $len, %edx         // %edx == 3rd argument (count)
         int $0x80
 
-        mov $1, %eax
-        ret
+        mov $SYS_exit, %eax
+        mov $7, %ebx
+        int $0x80
 
 .data
 msg:
         .ascii "Hello, world!\n"
-
-.set len, . - msg
+len:
+        .byte 0

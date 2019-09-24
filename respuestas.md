@@ -76,7 +76,30 @@ por qué se usa el modificador volatile para el puntero al buffer.
     El 47 corresponde al color con el que se quiere pintar
     Se usa el modificador volatile para indicarle al compilador que el valor de la variable al que esta asociado puede cambiar en cualquier momento. El buffer de video puede ser usado por otros programas, por eso cada vez que va a usar la variable debe volver a leer.
 
+mostrar el valor del stack pointer en ese momento (p $esp), así como del registro %eax en formato hexadecimal (p/x $eax). (Opcional: leer la sección Machine state en la documentación de Multiboot para entender el valor peculiar del registro %eax.)
+    (gdb) p $esp                                                                                                                                                
+    $1 = (void *) 0x6f08                                                                                                                                        
+    (gdb) p/x $eax                                                                                                                                             
+    $2 = 0x2badb002
 
+Valores de ebx:
+    0x0000024f      0x0000027f      0x0001fb80      0x8000ffff
+    Los primeros 4 bytes se usan para los flags de configuracion. (En binario, los ultimos 12 son: 001001001111)
+    Los segundos 4 bytes se usan para la direccion inicial de la memoria que esta asignada.
+    Los terceros 4 bytes se usan para la direccion final de la memoria que esta asignada.
+    Los cuartos 4 bytes nos dan la informacion de que bootloader cargó el sistema operativo.
+
+cantidad de memoria baja en decimal:
+    (gdb) x/2dw $ebx
+    0x9500: 591     639 
+    639 es la cantidad de memoria baja. Esta en KiloBytes.
+
+linea de comandos o cadena de arranque:
+    (gdb) x/5xw $ebx
+    0x9500: 0x0000024f      0x0000027f      0x0001fb80      0x8000ffff
+    0x9510: 0x00103000
+    (gdb) x/s 0x00103000
+    0x103000:       "kern0 "
 
 
 
@@ -122,7 +145,7 @@ Compilar ahora libc_hello.S y verificar que funciona correctamente. Explicar el 
     Pushea el string a imprimir
     Pushea 1 (standard ouput)
     Se llama a la syscall "write"
-    Se pushea a la pila el numero 7
+    Se pushea a la pila el numero 7 (exitcode)
     Se llama a la syscall "_exit"
 
 Hex dump de ./libc_hello (.ascii):
@@ -138,18 +161,46 @@ Hex dump de ./libc_hello (.asciz):
 La diferencia es el '\0' en el caso de .asciz. Asciz imprime strings con un nulo al final.
 
 
+Ej: x86-call:
+Usar stepi para ver los primeros cuatro valores de la pila, antes y despues del write.
+
+    (gdb) si
+    9               call write
+    (gdb) x/4xw $esp
+    0xffffcf70:     0x00000001      0x56557008      0x56557008      0xf7de6e81
+    (gdb) si
+    0xf7eb4d80 in write () from /lib/i386-linux-gnu/libc.so.6
+    (gdb) finish
+    Correr hasta la salida desde #0  0xf7eb4d80 in write () from /lib/i386-linux-gnu/libc.so.6
+    Hello, world!
+    main () at libc_hello.S:11
+    11              push $7
+    (gdb) x/4xw $esp
+    0xffffcf70:     0x00000001      0x56557008      0x56557008      0xf7de6e81
+
+    Los valores en el stack, son los mismos de antes de la llamada. Son el 1, el 
+    TODO: COMPLETAR ESTO
+
+
 
 
 Ej: x86-libc
 Salida de nm -u int80_hi:
+    ggparente95@ggparente95-X510UQ:~/Gaston/facultad/Facu/Sistemas Operativos/Labs/lab2-kern/extras$ nm --undefined int80_hi
          w __cxa_finalize@@GLIBC_2.1.3
          w __gmon_start__
          w _ITM_deregisterTMCloneTable
          w _ITM_registerTMCloneTable
-         U __libc_start_main@@GLIBC_2.
+         U __libc_start_main@@GLIBC_2.0
 
 Salida de nm -u int80_strlen:
-        nose
+    ggparente95@ggparente95-X510UQ:~/Gaston/facultad/Facu/Sistemas Operativos/Labs/lab2-kern/extras$ nm --undefined int80_strlen
+         w __cxa_finalize@@GLIBC_2.1.3
+         w __gmon_start__
+         w _ITM_deregisterTMCloneTable
+         w _ITM_registerTMCloneTable
+         U __libc_start_main@@GLIBC_2.0
+         U strlen@@GLIBC_2.0
 
 
 ¿qué significa que un registro sea callee-saved en lugar de caller-saved?
@@ -159,3 +210,22 @@ Salida de nm -u int80_strlen:
 en x86 ¿de qué tipo, caller-saved o callee-saved, es cada registro según la convención de llamadas de GCC?
     Son Caller-saved: EAX, ECX y EDX
     Son Callee-saved: EBP, EBX, EDI y ESI
+
+
+
+
+Ej: x86-ret.
+En asm: Como se pasa el valor de retorno?
+    Se pasa por el registro eax.
+
+Responder, en términos del frame pointer %ebp de una función f:
+
+¿dónde se encuentra (de haberlo) el primer argumento de f?
+se encuentra en ebp + 8
+¿dónde se encuentra la dirección a la que retorna f cuando ejecute ret?
+se encuentra en ebp + 4
+¿dónde se encuentra el valor de %ebp de la función anterior, que invocó a f?
+Suponiendo que la primera f tiene un solo argumento, se encontraria en ebp+12
+¿dónde se encuentra la dirección a la que retornará la función que invocó a f?
+Suponiendo que la primera f tiene un solo argumento, se encontraria en ebp+16
+

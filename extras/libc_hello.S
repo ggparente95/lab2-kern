@@ -1,6 +1,8 @@
 .global main
 main:
-        push $len
+        push $msg
+        call strlen
+        mov %eax,len(,1)
         push $msg
         push $1
 
@@ -12,5 +14,5 @@ main:
 .data
 msg:
         .ascii "Hello, world!\n"
-
-.set len, . - msg
+len:
+        .byte 0
