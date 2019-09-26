@@ -229,3 +229,102 @@ Suponiendo que la primera f tiene un solo argumento, se encontraria en ebp+12
 ¿dónde se encuentra la dirección a la que retornará la función que invocó a f?
 Suponiendo que la primera f tiene un solo argumento, se encontraria en ebp+16
 
+
+
+Incluir codigo de la funcion backtrace:
+
+    void backtrace(){
+        int *ebp = (int *)__builtin_frame_address(0);
+        ebp = (int*)*ebp;
+        int flag = 1;
+        int numfrm = 1;
+
+        while(flag == 1){
+            printf("#%d [0x%x] 0x%x ( 0x%x 0x%x 0x%x )\n", numfrm, ebp, *(ebp+1), *(ebp+2), *(ebp+3), *(ebp+4));  
+            ebp = (int*)*ebp;
+            numfrm++;
+            if (ebp == NULL)
+                flag = 0;
+        }
+    }
+
+
+incluir la salida del comando bt al entrar en la función backtrace
+
+    (gdb) bt
+    #0  backtrace () at backtrace.c:9
+    #1  0x08048557 in my_write (fd=2, msg=0x80486ab, count=15) at backtrace.c:26
+    #2  0x080485a3 in recurse (level=0) at backtrace.c:35
+    #3  0x080485b4 in recurse (level=1) at backtrace.c:33
+    #4  0x080485b4 in recurse (level=2) at backtrace.c:33
+    #5  0x080485b4 in recurse (level=3) at backtrace.c:33
+    #6  0x080485b4 in recurse (level=4) at backtrace.c:33
+    #7  0x080485b4 in recurse (level=5) at backtrace.c:33
+    #8  0x080485c6 in start_call_tree () at backtrace.c:39
+    #9  0x080485e1 in main () at backtrace.c:43
+
+incluir la salida del programa al ejecutarse la función backtrace (el número de frames y sus direcciones de retorno deberían coincidir con la salida de bt)
+
+    (gdb) c
+    Continuando.
+    #1 [0xffffce78] 0x80485a3 ( 0x2 0x80486ab 0xf )
+    #2 [0xffffce98] 0x80485b4 ( 0x0 0x0 0x0 )
+    #3 [0xffffceb8] 0x80485b4 ( 0x1 0xf63d4e2e 0xf7ffdaf8 )
+    #4 [0xffffced8] 0x80485b4 ( 0x2 0x1 0xf7fcf410 )
+    #5 [0xffffcef8] 0x80485b4 ( 0x3 0xc30000 0x0 )
+    #6 [0xffffcf18] 0x80485b4 ( 0x4 0xffffd1c8 0xf7dfe4a9 )
+    #7 [0xffffcf38] 0x80485c6 ( 0x5 0x0 0xffffd01c )
+    #8 [0xffffcf58] 0x80485e1 ( 0xf7fe59b0 0xffffcf80 0x0 )
+    #9 [0xffffcf68] 0xf7de6e81 ( 0xf7fa6000 0xf7fa6000 0x0 )
+
+    Como vemos, los return address coinciden con las direcciones que nos mostro GDB.
+
+usando los comandos de selección de frames, y antes de salir de la función backtrace, el valor de %ebp en cada marco de ejecución detectado por GDB (valores que también deberían coincidir).
+
+    (gdb) up
+    #1  0x08048557 in my_write (fd=2, msg=0x80486ab, count=15) at backtrace.c:22
+    22          backtrace();
+    (gdb) p/x $ebp
+    $1 = 0xffffce78
+    (gdb) up
+    #2  0x080485a3 in recurse (level=0) at backtrace.c:31
+    31              my_write(2, "Hello, world!\n", 15);
+    (gdb) p/x $ebp
+    $2 = 0xffffce98
+    (gdb) up
+    #3  0x080485b4 in recurse (level=1) at backtrace.c:29
+    29              recurse(level - 1);
+    (gdb) p/x $ebp
+    $3 = 0xffffceb8
+    (gdb) up
+    #4  0x080485b4 in recurse (level=2) at backtrace.c:29
+    29              recurse(level - 1);
+    (gdb) p/x $ebp
+    $4 = 0xffffced8
+    (gdb) up
+    #5  0x080485b4 in recurse (level=3) at backtrace.c:29
+    29              recurse(level - 1);
+    (gdb) p/x $ebp
+    $5 = 0xffffcef8
+    (gdb) up
+    #6  0x080485b4 in recurse (level=4) at backtrace.c:29
+    29              recurse(level - 1);
+    (gdb) p/x $ebp
+    $6 = 0xffffcf18
+    (gdb) up
+    #7  0x080485b4 in recurse (level=5) at backtrace.c:29
+    29              recurse(level - 1);
+    (gdb) p/x $ebp
+    $7 = 0xffffcf38
+    (gdb) up
+    #8  0x080485c6 in start_call_tree () at backtrace.c:35
+    35          recurse(5);
+    (gdb) p/x $ebp
+    $8 = 0xffffcf58
+    (gdb) up
+    #9  0x080485e1 in main () at backtrace.c:39
+    39          start_call_tree();
+    (gdb) p/x $ebp
+    $9 = 0xffffcf68
+    (gdb) up
+    Initial frame selected; you cannot go up.
